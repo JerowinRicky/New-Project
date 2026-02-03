@@ -91,6 +91,7 @@ import { permissionService } from '../Roles/permissionService';
 import logo from '../logo.png';
 import ReportVersionProgress from "../pages/ReportVersionProgress";
 import type { ReportStatusLog } from "../pages/ReportVersionProgress";
+import '../App.css';
 
 // Dynamically import docx and file-saver to avoid bundle issues
 import { Document, Packer, Paragraph, Table, TableCell, TableRow, HeadingLevel, AlignmentType, TextRun, WidthType, PageBreak, PageOrientation, SectionType } from 'docx';
@@ -2055,12 +2056,15 @@ const TableOfContents: React.FC<TableOfContentsProps> = memo(({ checkedByGroup, 
             </Typography>
 
             <Box sx={{ flex: 1, overflow: 'hidden', width: '100%' }}>
-                <Box sx={{
-                    height: '100%',
-                    overflow: 'auto',
-                    pr: 1,
-                    width: '100%'
-                }}>
+                <Box
+                    className="print-no-scroll"
+                    sx={{
+                        height: '100%',
+                        overflow: 'auto',
+                        pr: 1,
+                        width: '100%'
+                    }}
+                >
                     {checkedByGroup.length === 0 && (
                         <Typography variant="body2" color="text.secondary" textAlign="center">
                             No items selected yet. Check tasks in the sidebar to see content here.
@@ -2074,7 +2078,7 @@ const TableOfContents: React.FC<TableOfContentsProps> = memo(({ checkedByGroup, 
                         const pageInfo = pageNumbers[groupPageId];
 
                         return (
-                            <Box key={group.id} sx={{ mb: 3, width: '100%' }}>
+                            <Box key={group.id} className="avoid-page-break" sx={{ mb: 3 }}>
                                 <div className='flex justify-between items-center gap-3 mb-2 w-full'>
                                     <button
                                         onClick={() => scrollToPage(groupPageId)}
