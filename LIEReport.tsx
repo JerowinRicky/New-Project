@@ -91,7 +91,6 @@ import { permissionService } from '../Roles/permissionService';
 import logo from '../logo.png';
 import ReportVersionProgress from "../pages/ReportVersionProgress";
 import type { ReportStatusLog } from "../pages/ReportVersionProgress";
-import '../App.css';
 
 // Dynamically import docx and file-saver to avoid bundle issues
 import { Document, Packer, Paragraph, Table, TableCell, TableRow, HeadingLevel, AlignmentType, TextRun, WidthType, PageBreak, PageOrientation, SectionType } from 'docx';
@@ -1602,7 +1601,7 @@ const ContentPage: React.FC<ContentPageProps> = memo(({
     return (
         <Page id={pageId} pageNumber={pageNumber} orientation={orientation}>
             <Box sx={{
-                height: '100%',
+                // height: '100%',
                 display: 'flex',
                 flexDirection: 'column',
                 position: 'relative'
@@ -2055,16 +2054,13 @@ const TableOfContents: React.FC<TableOfContentsProps> = memo(({ checkedByGroup, 
                 Table of Contents
             </Typography>
 
-            <Box sx={{ flex: 1, overflow: 'hidden', width: '100%' }}>
-                <Box
-                    className="print-no-scroll"
-                    sx={{
-                        height: '100%',
-                        overflow: 'auto',
-                        pr: 1,
-                        width: '100%'
-                    }}
-                >
+            <Box sx={{ overflow: 'visible', width: '100%' }}>
+                <Box sx={{
+                    height: '100%',
+                    overflow: 'auto',
+                    pr: 1,
+                    width: '100%'
+                }}>
                     {checkedByGroup.length === 0 && (
                         <Typography variant="body2" color="text.secondary" textAlign="center">
                             No items selected yet. Check tasks in the sidebar to see content here.
@@ -2078,7 +2074,7 @@ const TableOfContents: React.FC<TableOfContentsProps> = memo(({ checkedByGroup, 
                         const pageInfo = pageNumbers[groupPageId];
 
                         return (
-                            <Box key={group.id} className="avoid-page-break" sx={{ mb: 3 }}>
+                            <Box key={group.id} sx={{ mb: 3, width: '100%' }}>
                                 <div className='flex justify-between items-center gap-3 mb-2 w-full'>
                                     <button
                                         onClick={() => scrollToPage(groupPageId)}
@@ -2365,7 +2361,7 @@ const TOCPage: React.FC<TOCPageProps> = memo(({
                 Table of Contents {totalPages > 1 ? `(Page ${pageNumber} of ${totalPages})` : ''}
             </Typography>
 
-            <Box sx={{ flex: 1, overflow: 'hidden', width: '100%' }}>
+            <Box sx={{ overflow: 'visible', width: '100%' }}>
                 <Box sx={{
                     height: '100%',
                     overflow: 'auto',
@@ -2607,13 +2603,16 @@ const ReportViewer: React.FC<ReportViewerProps> = memo(({
                 checkedByGroup.forEach((group, groupIndex) => {
                     if (!group?.checked) return;
 
-                    const sectionPages = splitContentIntoPages(group.content || [], `section-${group.id}`);
+                    // const sectionPages = splitContentIntoPages(group.content || [], `section-${group.id}`);
+                    const sectionPages = { pages: [group.content || []] };
                     const groupPageId = `section-${group.id}-page-1`;
                     newPageNumbers[groupPageId] = {
                         start: currentPage,
                         end: currentPage + sectionPages.pages.length - 1
                     };
-                    currentPage += sectionPages.pages.length;
+                    // currentPage += sectionPages.pages.length;
+                    const sectionPagesCount = 1;
+currentPage += sectionPagesCount;
 
                     group.items.forEach((item, itemIndex) => {
                         if (!item.checked) return;
@@ -3170,7 +3169,8 @@ const ReportViewer: React.FC<ReportViewerProps> = memo(({
                         if (!group?.checked) return null;
 
                         const sectionNumber = sectionNumbering[group.id] || (groupIndex + 1).toString();
-                        const sectionPages = splitContentIntoPages(group.content || [], `section-${group.id}`);
+                        // const sectionPages = splitContentIntoPages(group.content || [], `section-${group.id}`);
+                        const sectionPages = { pages: [group.content || []] };
 
                         const hasSectionComments = permissionService.hasPermission("comments");
 
@@ -3184,7 +3184,8 @@ const ReportViewer: React.FC<ReportViewerProps> = memo(({
                                             key={`section-${group.id}-page-${pageIndex + 1}`}
                                             pageId={`section-${group.id}-page-${pageIndex + 1}`}
                                             pageNumber={pageNumbers[`section-${group.id}-page-1`]?.start + pageIndex}
-                                            title={pageIndex === 0 ? `${sectionNumber}. ${group.title}` : `${sectionNumber}. ${group.title} (continued)`}
+                                            // title={pageIndex === 0 ? `${sectionNumber}. ${group.title}` : `${sectionNumber}. ${group.title} (continued)`}
+                                            title={`${sectionNumber}. ${group.title}`}
                                             sectionNumber=""
                                         >
                                             <Box sx={{ lineHeight: 1.6 }}>
@@ -3204,7 +3205,7 @@ const ReportViewer: React.FC<ReportViewerProps> = memo(({
                                                     </Box>
                                                 )}
 
-                                                {pageContent.map((content, contentIndex) => (
+                                                {pageContent.map((content:any, contentIndex:any) => (
                                                     <Box key={contentIndex} sx={{ mb: 3 }}>
                                                         {renderOlResult(
                                                             `section-${group.id}-content-${contentIndex}`,
@@ -3261,7 +3262,7 @@ const ReportViewer: React.FC<ReportViewerProps> = memo(({
                                                         <Box sx={{
                                                             lineHeight: 1.6,
                                                             width: '100%',
-                                                            height: '100%',
+                                                            // height: '100%',
                                                             display: 'flex',
                                                             flexDirection: 'column'
                                                         }}>
@@ -3318,7 +3319,7 @@ const ReportViewer: React.FC<ReportViewerProps> = memo(({
                     })}
 
                     <Page id="annexures-page" pageNumber={pageNumbers['annexures-page']?.start}>
-                        <Box sx={{ height: '100%', textAlign: 'center' }}>
+                        <Box sx={{ textAlign: 'center' }}>
                             <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 3, color: '#2563EB' }}>
                                 Annexures 2
                             </Typography>
@@ -4219,7 +4220,7 @@ export default function LIEReport() {
                     };
 
                     return (
-                        <Box className="bg-white p-3 rounded-md" sx={{ position: 'relative' }}>
+                        <Box className="bg-white p-3 rounded-md" >
                             {!editing ? (
                                 <>
                                     <Typography variant="body2" sx={{ lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
