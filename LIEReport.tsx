@@ -1537,11 +1537,7 @@ const Page: React.FC<PageProps> = memo(({ id, children, pageNumber, orientation 
                 position: 'relative' as const,
                 boxSizing: 'border-box' as const,
                 breakInside: 'avoid' as const,
-                overflow: 'hidden',
                 width: orientation === 'landscape' ? '297mm' : '210mm',
-                height: orientation === 'landscape' ? '210mm' : '297mm',
-                minWidth: orientation === 'landscape' ? '297mm' : '210mm',
-                minHeight: orientation === 'landscape' ? '210mm' : '297mm',
                 '@media print': {
                     margin: '0',
                     padding: '25mm',
@@ -1549,7 +1545,6 @@ const Page: React.FC<PageProps> = memo(({ id, children, pageNumber, orientation 
                     pageBreakAfter: 'always' as const,
                     pageBreakInside: 'avoid' as const,
                     width: orientation === 'landscape' ? '297mm' : '210mm',
-                    height: orientation === 'landscape' ? '210mm' : '297mm',
                 }
             }}
         >
@@ -1600,35 +1595,25 @@ const ContentPage: React.FC<ContentPageProps> = memo(({
 }) => {
     return (
         <Page id={pageId} pageNumber={pageNumber} orientation={orientation}>
-            <Box sx={{
-                // height: '100%',
-                display: 'flex',
-                flexDirection: 'column',
-                position: 'relative'
-            }}>
-                {title && (
-                    <Typography
-                        variant={isSubsection ? "h5" : "h4"}
-                        sx={{
-                            fontWeight: 'bold',
-                            color: '#032F5D',
-                            mb: 3,
-                            ...(isSubsection ? {
-                                fontSize: '1.5rem'
-                            } : {
-                                fontSize: '1.75rem'
-                            })
-                        }}
-                    >
-                        {sectionNumber && !title.includes('continued') && `${sectionNumber} `}{title}
-                    </Typography>
-                )}
-                <Box sx={{
-                    flex: 1,
-                    overflow: 'hidden'
-                }}>
-                    {children || content}
-                </Box>
+            {title && (
+                <Typography
+                    variant={isSubsection ? "h5" : "h4"}
+                    sx={{
+                        fontWeight: 'bold',
+                        color: '#032F5D',
+                        mb: 3,
+                        ...(isSubsection ? {
+                            fontSize: '1.5rem'
+                        } : {
+                            fontSize: '1.75rem'
+                        })
+                    }}
+                >
+                    {sectionNumber && !title.includes('continued') && `${sectionNumber} `}{title}
+                </Typography>
+            )}
+            <Box>
+                {children || content}
             </Box>
         </Page>
     );
@@ -2054,7 +2039,7 @@ const TableOfContents: React.FC<TableOfContentsProps> = memo(({ checkedByGroup, 
                 Table of Contents
             </Typography>
 
-            <Box sx={{ overflow: 'visible', width: '100%' }}>
+            <Box sx={{ flex: 1, overflow: 'hidden', width: '100%' }}>
                 <Box sx={{
                     height: '100%',
                     overflow: 'auto',
@@ -2361,7 +2346,7 @@ const TOCPage: React.FC<TOCPageProps> = memo(({
                 Table of Contents {totalPages > 1 ? `(Page ${pageNumber} of ${totalPages})` : ''}
             </Typography>
 
-            <Box sx={{ overflow: 'visible', width: '100%' }}>
+            <Box sx={{ flex: 1, overflow: 'hidden', width: '100%' }}>
                 <Box sx={{
                     height: '100%',
                     overflow: 'auto',
@@ -2370,7 +2355,7 @@ const TOCPage: React.FC<TOCPageProps> = memo(({
                 }}>
                     {items.map((tocItem, index) => {
                         if (!tocItem.item) {
-                            const groupPageId = `section-${tocItem.group.id}-page-1`;
+                            const groupPageId = `section-${tocItem.group.id}`;
                             const pageInfo = pageNumbers[groupPageId];
 
                             return (
@@ -2603,20 +2588,15 @@ const ReportViewer: React.FC<ReportViewerProps> = memo(({
                 checkedByGroup.forEach((group, groupIndex) => {
                     if (!group?.checked) return;
 
-                    // const sectionPages = splitContentIntoPages(group.content || [], `section-${group.id}`);
-                    const sectionPages = { pages: [group.content || []] };
-                    const groupPageId = `section-${group.id}-page-1`;
-                    newPageNumbers[groupPageId] = {
-                        start: currentPage,
-                        end: currentPage + sectionPages.pages.length - 1
-                    };
-                    // currentPage += sectionPages.pages.length;
-                    const sectionPagesCount = 1;
-currentPage += sectionPagesCount;
+                    // Single page per section instead of split pages
+                    const groupPageId = `section-${group.id}`;
+                    newPageNumbers[groupPageId] = { start: currentPage };
+                    currentPage++; // Each section starts on a new page
 
                     group.items.forEach((item, itemIndex) => {
                         if (!item.checked) return;
 
+                        // Subsections can still be paginated if required
                         const itemPages = splitContentIntoPages(item.content || [], `subsection-${item.id}`);
                         const itemPageId = `subsection-${item.id}-page-1`;
                         newPageNumbers[itemPageId] = {
@@ -3169,67 +3149,61 @@ currentPage += sectionPagesCount;
                         if (!group?.checked) return null;
 
                         const sectionNumber = sectionNumbering[group.id] || (groupIndex + 1).toString();
-                        // const sectionPages = splitContentIntoPages(group.content || [], `section-${group.id}`);
-                        const sectionPages = { pages: [group.content || []] };
+                        // REMOVED: const sectionPages = splitContentIntoPages(group.content || [], `section-${group.id}`);
 
                         const hasSectionComments = permissionService.hasPermission("comments");
 
                         return (
                             <React.Fragment key={group.id}>
-                                {sectionPages.pages.map((pageContent, pageIndex) => {
-                                    const isLastSectionPage = pageIndex === sectionPages.pages.length - 1;
+                                {/* Single page per section instead of split pages */}
+                                <ContentPage
+                                    key={`section-${group.id}`}
+                                    pageId={`section-${group.id}`}
+                                    pageNumber={pageNumbers[`section-${group.id}`]?.start}
+                                    title={`${sectionNumber}. ${group.title}`}
+                                    sectionNumber=""
+                                >
+                                    <Box sx={{ lineHeight: 1.6 }}>
+                                        {hasSectionComments && (
+                                            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+                                                <IconButton
+                                                    size="small"
+                                                    onClick={() => {
+                                                        if (!group.main_id) return;
+                                                        handleOpenCommentModal("section", group.main_id);
+                                                    }}
+                                                    sx={{ color: '#666' }}
+                                                    title="Add comment to this section"
+                                                >
+                                                    <CommentOutlined fontSize="small" />
+                                                </IconButton>
+                                            </Box>
+                                        )}
 
-                                    return (
-                                        <ContentPage
-                                            key={`section-${group.id}-page-${pageIndex + 1}`}
-                                            pageId={`section-${group.id}-page-${pageIndex + 1}`}
-                                            pageNumber={pageNumbers[`section-${group.id}-page-1`]?.start + pageIndex}
-                                            // title={pageIndex === 0 ? `${sectionNumber}. ${group.title}` : `${sectionNumber}. ${group.title} (continued)`}
-                                            title={`${sectionNumber}. ${group.title}`}
-                                            sectionNumber=""
-                                        >
-                                            <Box sx={{ lineHeight: 1.6 }}>
-                                                {hasSectionComments && pageIndex === 0 && (
-                                                    <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
-                                                        <IconButton
-                                                            size="small"
-                                                            onClick={() => {
-                                                                if (!group.main_id) return;
-                                                                handleOpenCommentModal("section", group.main_id);
-                                                            }}
-                                                            sx={{ color: '#666' }}
-                                                            title="Add comment to this section"
-                                                        >
-                                                            <CommentOutlined fontSize="small" />
-                                                        </IconButton>
-                                                    </Box>
-                                                )}
-
-                                                {pageContent.map((content:any, contentIndex:any) => (
-                                                    <Box key={contentIndex} sx={{ mb: 3 }}>
-                                                        {renderOlResult(
-                                                            `section-${group.id}-content-${contentIndex}`,
-                                                            content,
-                                                            group.main_id || '',
-                                                            contentIndex,
-                                                            pageContent,
-                                                            handleOpenCommentModal
-                                                        )}
-                                                    </Box>
-                                                ))}
-
-                                                {isLastSectionPage && hasSectionComments && group.main_id && (
-                                                    <Box sx={{ mt: 4, pt: 3, borderTop: '1px solid #e5e7eb' }}>
-                                                        <SectionComments
-                                                            sectionId={group.main_id}
-                                                            safeFetch={safeFetch}
-                                                        />
-                                                    </Box>
+                                        {/* Render all content without splitting */}
+                                        {group.content && Array.isArray(group.content) && group.content.map((content, contentIndex) => (
+                                            <Box key={contentIndex} sx={{ mb: 3 }}>
+                                                {renderOlResult(
+                                                    `section-${group.id}-content-${contentIndex}`,
+                                                    content,
+                                                    group.main_id || '',
+                                                    contentIndex,
+                                                    group.content,
+                                                    handleOpenCommentModal
                                                 )}
                                             </Box>
-                                        </ContentPage>
-                                    );
-                                })}
+                                        ))}
+
+                                        {hasSectionComments && group.main_id && (
+                                            <Box sx={{ mt: 4, pt: 3, borderTop: '1px solid #e5e7eb' }}>
+                                                <SectionComments
+                                                    sectionId={group.main_id}
+                                                    safeFetch={safeFetch}
+                                                />
+                                            </Box>
+                                        )}
+                                    </Box>
+                                </ContentPage>
 
                                 {group.items.map((item, itemIndex) => {
                                     if (!item.checked) return null;
@@ -3262,9 +3236,6 @@ currentPage += sectionPagesCount;
                                                         <Box sx={{
                                                             lineHeight: 1.6,
                                                             width: '100%',
-                                                            // height: '100%',
-                                                            display: 'flex',
-                                                            flexDirection: 'column'
                                                         }}>
                                                             {hasSubsectionComments && pageIndex === 0 && (
                                                                 <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
@@ -3319,7 +3290,7 @@ currentPage += sectionPagesCount;
                     })}
 
                     <Page id="annexures-page" pageNumber={pageNumbers['annexures-page']?.start}>
-                        <Box sx={{ textAlign: 'center' }}>
+                        <Box sx={{ height: '100%', textAlign: 'center' }}>
                             <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 3, color: '#2563EB' }}>
                                 Annexures 2
                             </Typography>
@@ -4220,7 +4191,7 @@ export default function LIEReport() {
                     };
 
                     return (
-                        <Box className="bg-white p-3 rounded-md" >
+                        <Box className="bg-white p-3 rounded-md" sx={{ position: 'relative' }}>
                             {!editing ? (
                                 <>
                                     <Typography variant="body2" sx={{ lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
